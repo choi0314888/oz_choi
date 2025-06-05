@@ -1,42 +1,42 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from schemas import BookSchema
+from schemas import LibraryItemSchema
 
-blp = Blueprint("Books", __name__, description="책 관리 API")
+blp = Blueprint("Library", __name__, description="도서관 API")
 
-books = []
-book_id_counter = 1
+book_storage = []
+book_index = 1
 
-@blp.route("/books")
-class BooksResource(MethodView):
+@blp.route("/library")
+class LibraryCollection(MethodView):
 
-    @blp.response(200, BookSchema(many=True))
-    def get(self):
-        return books
+    @blp.response(200, LibraryItemSchema(many=True))
+    def list_books(self):
+        return book_storage
 
-    @blp.arguments(BookSchema)
-    @blp.response(201, BookSchema)
-    def post(self, new_data):
-        global book_id_counter
-        new_data["id"] = book_id_counter
-        book_id_counter += 1
-        books.append(new_data)
-        return new_data
+    @blp.arguments(LibraryItemSchema)
+    @blp.response(201, LibraryItemSchema)
+    def create_book(self, data):
+        global book_index
+        data["id"] = book_index
+        book_index += 1
+        book_storage.append(data)
+        return data
 
-@blp.route("/books/<int:book_id>")
-class BookResource(MethodView):
+@blp.route("/library/<int:item_id>")
+class LibraryItem(MethodView):
 
-    @blp.arguments(BookSchema)
-    @blp.response(200, BookSchema)
-    def put(self, updated_data, book_id):
-        for book in books:
-            if book["id"] == book_id:
-                book.update(updated_data)
+    @blp.arguments(LibraryItemSchema)
+    @blp.response(200, LibraryItemSchema)
+    def modify_book(self, update_data, item_id):
+        for book in book_storage:
+            if book["id"] == item_id:
+                book.update(update_data)
                 return book
-        abort(404, message="책을 찾을 수 없습니다.")
+        abort(404, message="해당 책을 찾을 수 없습니다.")
 
     @blp.response(204)
-    def delete(self, book_id):
-        global books
-        books = [b for b in books if b["id"] != book_id]
+    def remove_book(self, item_id):
+        global book_storage
+        book_storage = [b for b in book_storage if b["id"] != item_id]
         return ""
